@@ -22,6 +22,7 @@ var handleInput = function(data, sock) {
     "key": data.toString().split(":")[0],
     "value": data.toString().split(":")[1]
   }
+  puts(input["full"]);
   switch(input["key"]) {
     case "username":
       addPlayer(input["value"], sock);  
@@ -60,7 +61,6 @@ var addPlayer = function(name, sock) {
 
   }
 }
-
 var makeMove = function(move, sock) {
   players.forEach(function(el, i, arr) {
     if(sock === el["socket"]) {
@@ -79,7 +79,7 @@ var calcWinner = function() {
   mvs = [];
   players.forEach(function(el, i, arr) {
     
-  }
+  });
 }
 
 var startGame = function() {
@@ -94,5 +94,4 @@ process.addListener("SIGINT", function() {
   puts("goodbye");
   process.exit(0);
 });
-
 server.listen(1337, '127.0.0.1');

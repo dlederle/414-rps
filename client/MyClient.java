@@ -15,7 +15,7 @@ public class MyClient {
     BufferedReader in = null;
 
     try {
-      mySocket = new Socket("rosemary.umw.edu", 2301);
+      mySocket = new Socket("localhost", 1337);
       out = new PrintWriter(mySocket.getOutputStream(), true);
       in = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
     } 
@@ -40,7 +40,6 @@ public class MyClient {
 
       while(gameOn) {
         String fromServer;
-        out.println("I wanna play!");
         boolean playing = true;
         while(playing) {
           fromServer = in.readLine();
