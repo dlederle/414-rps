@@ -14,10 +14,12 @@ public class MyClient {
     PrintWriter out = null;
     BufferedReader in = null;
 
+
     try {
       mySocket = new Socket("localhost", 1337);
       out = new PrintWriter(mySocket.getOutputStream(), true);
       in = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
+      attachShutDownHook(out);
     } 
     catch (UnknownHostException e) {
       System.err.println("I couldn't find the host rosemary.umw.edu.");
@@ -65,5 +67,17 @@ public class MyClient {
       System.err.println(e);
     }
     return "Error";
+  }
+  
+  //Code adapted from http://hellotojavaworld.blogspot.com/2010/11/runtimeaddshutdownhook.html
+  public static void attachShutDownHook(PrintWriter output) {
+    final PrintWriter out = output;
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        out.println("quit:quit");
+      }
+    });
+    System.out.println("added");
   }
 }

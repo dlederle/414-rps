@@ -2,13 +2,12 @@ var puts = require("util").puts,
     net  = require("net"),
     playerCount = 0,  //Yay globals
     players = [],
-    scores = [],
     moves = 0;
 
 var server = net.createServer(function (socket) {
   playerCount++;
   if(playerCount < 4) {
-    socket.write("Welcome to RPS. What is your username?\nPlease use the format username:myUsername\n", function() {
+    socket.write("Welcome to RPS. What is your username? Please use the format username:myUsername\n", function() {
       socket.on('data', function(data) { handleInput(data, socket); });
     }); 
   } else {
@@ -17,18 +16,29 @@ var server = net.createServer(function (socket) {
 });
 
 var handleInput = function(data, sock) {
+  if(/^\s+$/.test(data.toString())) { puts("whitespace"); return; }
   var input = { 
     "full": data.toString(), 
-    "key": data.toString().split(":")[0],
-    "value": data.toString().split(":")[1]
+    "key": data.toString().split(":")[0].trim(),
+    "value": data.toString().split(":")[1].trim()
   }
-  puts(input["full"]);
   switch(input["key"]) {
     case "username":
       addPlayer(input["value"], sock);  
       break;
     case "move":
-      makeMove(input["value"], sock);
+      if(input["value"] == "rock" || input["value"] == "scissors" || input["value"] == "paper") {
+        makeMove(input["value"], sock);
+      } else {
+        sock.write("Please choose 'rock', 'paper', or 'scissors'\n");
+      }
+      break;
+    case "quit":
+      players.forEach(function(i, e, a) {
+        if(e.socket == sock) {
+          delete players[i];
+        }
+      });
       break;
     default: 
       sock.write("Sorry, I don't understand. Please format input correctly\n");
@@ -76,16 +86,63 @@ var makeMove = function(move, sock) {
 }
 
 var calcWinner = function() {
-  mvs = [];
+  scores = { 
+      "rock" :     { count: 0, pts: 0, socks: [] }, 
+      "paper" :    { count: 0, pts: 0, socks: [] }, 
+      "scissors" : { count: 0, pts: 0, socks: [] }
+  }
+
   players.forEach(function(el, i, arr) {
-    
+    scores[el.move]["count"]++;
+  });
+
+  if(scores["rock"]["count"] == 2) {
+    if(scores["paper"]["count"] == 1) {
+      scores["paper"]["pts"] += 2;
+    } else {
+      scores["rock"]["pts"] += 1;
+    }
+  } else if(scores["paper"]["count"] == 2) {
+    if(scores["scissors"]["count"] == 1) {
+      scores["scissors"]["pts"] += 2;
+    } else {
+      scores["paper"]["pts"] += 1;
+    }
+  } else if(scores["scissors"]["count"] == 2) {
+    if(scores["rock"]["count"] == 1) {
+      scores["rock"]["pts"] += 2;
+    } else {
+      scores["scissors"]["pts"] += 1;
+    }
+  }
+  //I don't even want to think about the runtime efficiency of this
+  players.forEach(function(el, ind, arr) {
+    Object.keys(scores).forEach(function(e, i, a) {
+      if(scores[e].socks.indexOf(el["socket"])) {
+        el.score += scores[e].pts;
+        el.ptsGained = scores[e].pts;
+      }
+    });
+  });
+
+  printScores();
+}
+
+var printScores = function() {
+  var msg = "Round over:";
+  players.forEach(function(el, i, arr) {
+    msg += el.username + " chose " + el.move + " and gained " + el.ptsGained + ". ";
+    msg += "They now have " + el.score + " total points. ";
+  });
+  players.forEach(function(e, i, a) {
+    e.socket.write(msg);
   });
 }
 
 var startGame = function() {
   moves = 0;
   players.forEach(function(el, i, arr) {
-    el["socket"].write("Please choose your move.\n" +
+    el["socket"].write("Please choose your move. " +
                     "Answer in the form move:[rock, paper, scissors]\n");
   });
 }
